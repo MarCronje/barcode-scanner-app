@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from PIL import Image
 from io import BytesIO
+import re
 
 st.title("📸 Barcode Scanner (Google ZXing API)")
 
@@ -21,7 +22,15 @@ if uploaded_file:
     response = requests.post("https://zxing.org/w/decode", files=files)
 
     if response.status_code == 200:
-        result = response.text
-        st.success(f"✅ Barcode Result:\n{result}")
+        html_text = response.text
+
+        # Extract barcode number using regex
+        match = re.search(r'<td>Raw text</td><td><pre>(.*?)</pre></td>', html_text)
+        
+        if match:
+            barcode_data = match.group(1)
+            st.success(f"✅ Barcode Detected: {barcode_data}")
+        else:
+            st.error("⚠️ No barcode found. Please try again with a clearer image.")
     else:
-        st.error("⚠️ Failed to scan barcode. Please try again with a clearer image.")
+        st.error("⚠️ Failed to scan barcode. Please try again.")
